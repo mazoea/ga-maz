@@ -64,5 +64,6 @@ runs:
         notification-color: '28a745'
         notification-summary: '&#x2705 Finished [${{ github.repository }}] [${{ env.JOBNAME }}] by [${{ github.actor }}] on [${{ runner.os }}]'
         notification-failure: '&#x1F621&#x1F621&#x1F621 FAILED [${{ github.repository }}] [${{ env.JOBNAME }}]'
+        text: "${{ inputs.MSG }}"
         success: ${{ job.status == 'success' }}
       if: ${{ always() && inputs.MS_TEAMS_URI != '' }}
