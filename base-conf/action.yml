@@ -11,8 +11,11 @@ runs:
   using: "composite"
   steps:
     - id: extract-branch
+      shell: bash
       run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
     - id: extract-uid
+      shell: bash
       run: echo "uid=$(id -u)" >> $GITHUB_OUTPUT
     - id: extract-gid
+      shell: bash
       run: echo "gid=$(id -g)" >> $GITHUB_OUTPUT
