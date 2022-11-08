@@ -20,29 +20,44 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: basic info
+    - name: inputs
       shell: bash
       run: |
-        echo "=========================="
-        pwd
-        echo "=========================="
         echo "${{ inputs.UID }}"
         echo "${{ inputs.GID }}"
         echo "${{ inputs.MSG }}"
         echo "${{ env.BRANCH }}"
-        echo "=========================="
-        env
+
+    - name: basic info
+      shell: bash
+      run: |
+        pwd
         echo "=========================="
         echo `hostname`
         echo "=========================="
         cat /opt/info/hostname || true
         echo "=========================="
         id
-        echo "=========================="
+
+    - name: env
+      shell: bash
+      run: |
+        env
+
+    - name: ls
+      shell: bash
+      run: |
         ls -lah
-        echo "=========================="
+
+    - name: services
+      shell: bash
+      run: |
         git --version || true
-        echo "=========================="
+
+    - name: disk
+      shell: bash
+      run: |
+        df -h
 
     - name: cleanup - change owner
       shell: bash
