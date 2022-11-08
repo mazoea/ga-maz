@@ -60,7 +60,7 @@ runs:
     - uses: mazoea/ga-maz/ms-teams-info@master
       with:
         github-token: ${{ github.token }}
-        ms-teams-webhook-uri: ${{ secrets.MS_DQ_TEAMS_WEBHOOK_URI }}
+        ms-teams-webhook-uri: ${{ inputs.MS_TEAMS_URI }}
         notification-color: '28a745'
         notification-summary: '&#x2705 Finished [${{ github.repository }}] [${{ env.JOBNAME }}] by [${{ github.actor }}] on [${{ runner.os }}]'
         notification-failure: '&#x1F621&#x1F621&#x1F621 FAILED [${{ github.repository }}] [${{ env.JOBNAME }}]'
