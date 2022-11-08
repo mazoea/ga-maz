@@ -38,26 +38,31 @@ runs:
         cat /opt/info/hostname || true
         echo "=========================="
         id
+        echo "=========================="
 
     - name: env
       shell: bash
       run: |
         env
+        echo "=========================="
 
     - name: ls
       shell: bash
       run: |
         ls -lah
+        echo "=========================="
 
     - name: services
       shell: bash
       run: |
         git --version || true
+        echo "=========================="
 
     - name: disk
       shell: bash
       run: |
-        df -h
+        df -h | grep /$ || true
+        echo "=========================="
 
     - name: cleanup - change owner
       shell: bash
