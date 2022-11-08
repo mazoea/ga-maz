@@ -13,6 +13,10 @@ inputs:
     description: 'message'
     required: false
     default: ''
+  MS_TEAMS_URI:
+    description: 'webhook url'
+    required: false
+    default: ''
 runs:
   using: "composite"
   steps:
@@ -52,3 +56,13 @@ runs:
       run: |
         echo "${{ inputs.MSG }}"
       if: ${{ inputs.MSG != '' }}
+
+    - uses: mazoea/ga-maz/ms-teams-info@master
+      with:
+        github-token: ${{ github.token }}
+        ms-teams-webhook-uri: ${{ secrets.MS_DQ_TEAMS_WEBHOOK_URI }}
+        notification-color: '28a745'
+        notification-summary: '&#x2705 Finished [${{ github.repository }}] [${{ env.JOBNAME }}] by [${{ github.actor }}] on [${{ runner.os }}]'
+        notification-failure: '&#x1F621&#x1F621&#x1F621 FAILED [${{ github.repository }}] [${{ env.JOBNAME }}]'
+        success: ${{ job.status == 'success' }}
+      if: ${{ always() && inputs.MS_TEAMS_URI != '' }}
