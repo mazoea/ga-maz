@@ -1,0 +1,43 @@
+name: 'Mazoea default start action'
+description: 'Common tasks after job start'
+inputs:
+  UID:
+    description: 'uid'
+    default: '0'
+    required: false
+  GID:
+    description: 'gid'
+    default: '0'
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - name: basic info
+      shell: bash
+      run: |
+        echo "=========================="
+        pwd
+        echo "=========================="
+        echo "${{ inputs.UID }}"
+        echo "${{ inputs.GID }}"
+        echo "${{ env.BRANCH }}"
+        echo "=========================="
+        env
+        echo "=========================="
+        echo `hostname`
+        echo "=========================="
+        cat /opt/info/hostname || true
+        echo "=========================="
+        id
+        echo "=========================="
+        ls -lah
+        echo "=========================="
+        git --version || true
+        echo "=========================="
+
+        MAZUID=${{ inputs.UID }}
+        if [[ "x$MAZUID" != "x0" ]]; then
+          docker run --rm -e MAZUID=${{ inputs.UID }} -e MAZGID=${{ inputs.GID }} -v $(pwd):/maz registry.gitlab.com/mazoea-team/docker-ci-build:u18g8py38 /bin/bash -c 'ls -lah /maz && echo chown -R $MAZUID:$MAZGID /maz && (chown -R $MAZUID:$MAZGID /maz | tail -25) && ls -lah /maz' || true
+          echo "=========================="
+        fi        
+  

@@ -1,0 +1,13 @@
+on:
+  push:
+
+name: Test
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - uses: ./start
+      with:
+        CONTEXT_GITHUB: ${{ toJson(github) }}

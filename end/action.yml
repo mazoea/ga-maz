@@ -1,0 +1,50 @@
+name: 'Maz end action'
+description: 'Common tasks after job end'
+inputs:
+  UID:
+    description: 'uid'
+    required: true
+  GID:
+    description: 'gid'
+    required: true
+  MSG:
+    description: 'message'
+    required: false
+    default: ''
+runs:
+  using: "composite"
+  steps:
+    - name: basic info
+      shell: bash
+      run: |
+        echo "=========================="
+        pwd
+        echo "=========================="
+        echo "${{ inputs.UID }}"
+        echo "${{ inputs.GID }}"
+        echo "${{ inputs.MSG }}"
+        echo "${{ env.BRANCH }}"
+        echo "=========================="
+        env
+        echo "=========================="
+        echo `hostname`
+        echo "=========================="
+        cat /opt/info/hostname || true
+        echo "=========================="
+        id
+        echo "=========================="
+        ls -lah
+        echo "=========================="
+
+    - name: cleanup - change owner
+      shell: bash
+      run: |
+        echo chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./
+        chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./ || true
+      if: ${{ always() }}
+
+    - name: detailed info
+      shell: bash
+      run: |
+        echo "${{ inputs.MSG }}"
+      if: ${{ inputs.MSG != '' }}
