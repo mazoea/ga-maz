@@ -1,12 +1,14 @@
-name: 'Maz end action'
+name: 'Mazoea default end action'
 description: 'Common tasks after job end'
 inputs:
   UID:
     description: 'uid'
-    required: true
+    default: '0'
+    required: false
   GID:
     description: 'gid'
-    required: true
+    default: '0'
+    required: false
   MSG:
     description: 'message'
     required: false
@@ -35,13 +37,15 @@ runs:
         echo "=========================="
         ls -lah
         echo "=========================="
+        git --version || true
+        echo "=========================="
 
     - name: cleanup - change owner
       shell: bash
       run: |
         echo chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./
         chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./ || true
-      if: ${{ always() }}
+      if: ${{ inputs.UID != '0' }}
 
     - name: detailed info
       shell: bash

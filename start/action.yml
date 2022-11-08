@@ -35,9 +35,8 @@ runs:
         git --version || true
         echo "=========================="
 
-        MAZUID=${{ inputs.UID }}
-        if [[ "x$MAZUID" != "x0" ]]; then
-          docker run --rm -e MAZUID=${{ inputs.UID }} -e MAZGID=${{ inputs.GID }} -v $(pwd):/maz registry.gitlab.com/mazoea-team/docker-ci-build:u18g8py38 /bin/bash -c 'ls -lah /maz && echo chown -R $MAZUID:$MAZGID /maz && (chown -R $MAZUID:$MAZGID /maz | tail -25) && ls -lah /maz' || true
-          echo "=========================="
-        fi        
-  
+    - name: cleanup - change owner
+      shell: bash
+      run: |
+        docker run --rm -e MAZUID=${{ inputs.UID }} -e MAZGID=${{ inputs.GID }} -v $(pwd):/maz registry.gitlab.com/mazoea-team/docker-ci-build:u18g8py38 /bin/bash -c 'ls -lah /maz && echo chown -R $MAZUID:$MAZGID /maz && (chown -R $MAZUID:$MAZGID /maz | tail -25) && ls -lah /maz' || true
+      if: ${{ inputs.UID != '0' }}
