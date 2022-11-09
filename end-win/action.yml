@@ -13,6 +13,7 @@ runs:
   using: "composite"
   steps:
     - name: inputs
+      shell: cmd
       run: |
         echo "${{ inputs.UID }}"
         echo "${{ inputs.GID }}"
@@ -20,11 +21,13 @@ runs:
         echo "${{ env.BRANCH }}"
 
     - name: services
+      shell: cmd
       run: |
         git --version || true
         echo "=========================="
 
     - name: detailed info
+      shell: cmd
       run: |
         echo "${{ inputs.MSG }}"
       if: ${{ inputs.MSG != '' }}
