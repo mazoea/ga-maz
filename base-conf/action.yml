@@ -12,7 +12,7 @@ runs:
   steps:
     - id: extract-branch
       shell: bash
-        run: |
+      run: |
           if [[ "x$GITHUB_HEAD_REF" == "x" ]]; then
             echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
           else
