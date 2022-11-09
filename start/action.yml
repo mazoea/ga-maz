@@ -26,25 +26,25 @@ runs:
     - name: basic info
       shell: bash
       run: |
-        pwd
+        pwd || true
         echo "=========================="
-        echo `hostname`
+        echo `hostname` || true
         echo "=========================="
         cat /opt/info/hostname || true
         echo "=========================="
-        id
+        id || true
         echo "=========================="
 
     - name: env
       shell: bash
       run: |
-        env
+        env || true
         echo "=========================="
 
     - name: ls
       shell: bash
       run: |
-        ls -lah
+        ls -lah || true
         echo "=========================="
 
     - name: services
