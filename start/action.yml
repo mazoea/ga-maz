@@ -16,7 +16,11 @@ inputs:
 runs:
   using: "composite"
   steps:
+
+# linux
+
     - name: inputs
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         echo "${{ inputs.UID }}"
@@ -24,6 +28,7 @@ runs:
         echo "${{ env.BRANCH }}"
 
     - name: basic info
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         pwd || true
@@ -34,36 +39,53 @@ runs:
         echo "=========================="
         id || true
         echo "=========================="
-
-    - name: env
-      shell: bash
-      run: |
         env || true
         echo "=========================="
-
-    - name: ls
-      shell: bash
-      run: |
         ls -lah || true
+        echo "=========================="
+        df -h | grep /$ || true
         echo "=========================="
 
     - name: services
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         git --version || true
         echo "=========================="
 
-    - name: disk
-      shell: bash
-      run: |
-        df -h | grep /$ || true
-        echo "=========================="
-
     - name: cleanup - change owner
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         docker run --rm -e MAZUID=${{ inputs.UID }} -e MAZGID=${{ inputs.GID }} -v $(pwd):/maz registry.gitlab.com/mazoea-team/docker-ci-build:u18g8py38 /bin/bash -c 'ls -lah /maz && echo chown -R $MAZUID:$MAZGID /maz && (chown -R $MAZUID:$MAZGID /maz | tail -25) && ls -lah /maz' || true
       if: ${{ inputs.UID != '0' }}
+
+# windows
+
+    - name: inputs
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: |
+        echo "${{ inputs.UID }}"
+        echo "${{ inputs.GID }}"
+        echo "${{ inputs.MSG }}"
+        echo "${{ env.BRANCH }}"
+
+    - name: services
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: |
+        git --version || true
+        echo "=========================="
+
+    - name: detailed info
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: |
+        echo "${{ inputs.MSG }}"
+      if: ${{ inputs.MSG != '' }}
+
+# common
 
     - uses: mazoea/ga-maz/ms-teams-info@master
       with:
