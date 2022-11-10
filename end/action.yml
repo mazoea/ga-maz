@@ -64,7 +64,6 @@ runs:
       run: |
         echo chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./
         chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./ || true
-      if: ${{ inputs.UID != '0' }}
 
     - name: detailed info
       if: ${{ runner.os == 'Linux' && inputs.MSG != '' }}
@@ -91,11 +90,10 @@ runs:
         echo "=========================="
 
     - name: detailed info
-      if: ${{ runner.os == 'Windows' }}
+      if: ${{ runner.os == 'Windows' && inputs.MSG != '' }}
       shell: cmd
       run: |
         echo "${{ inputs.MSG }}"
-      if: ${{ inputs.MSG != '' }}
 
 # common
 
