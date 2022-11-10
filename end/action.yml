@@ -24,7 +24,7 @@ runs:
 # linux
 
     - name: inputs
-      if: runner.os == 'Linux'
+      if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: |
         echo "${{ inputs.UID }}"
@@ -33,7 +33,7 @@ runs:
         echo "${{ env.BRANCH }}"
 
     - name: basic info
-      if: runner.os == 'Linux'
+      if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: |
         pwd || true
@@ -52,14 +52,14 @@ runs:
         echo "=========================="
 
     - name: services
-      if: runner.os == 'Linux'
+      if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: |
         git --version || true
         echo "=========================="
 
     - name: cleanup - change owner
-      if: runner.os == 'Linux'
+      if: ${{ runner.os == 'Linux' && inputs.UID != '0' }}
       shell: bash
       run: |
         echo chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./
@@ -67,16 +67,15 @@ runs:
       if: ${{ inputs.UID != '0' }}
 
     - name: detailed info
-      if: runner.os == 'Linux'
+      if: ${{ runner.os == 'Linux' && inputs.MSG != '' }}
       shell: bash
       run: |
         echo "${{ inputs.MSG }}"
-      if: ${{ inputs.MSG != '' }}
 
 # windows
 
     - name: inputs
-      if: runner.os == 'Windows'
+      if: ${{ runner.os == 'Windows' }}
       shell: cmd
       run: |
         echo "${{ inputs.UID }}"
@@ -85,14 +84,14 @@ runs:
         echo "${{ env.BRANCH }}"
 
     - name: services
-      if: runner.os == 'Windows'
+      if: ${{ runner.os == 'Windows' }}
       shell: cmd
       run: |
         git --version || true
         echo "=========================="
 
     - name: detailed info
-      if: runner.os == 'Windows'
+      if: ${{ runner.os == 'Windows' }}
       shell: cmd
       run: |
         echo "${{ inputs.MSG }}"
