@@ -3133,12 +3133,13 @@ function run() {
             const octokit = new rest_1.Octokit({ auth: `token ${githubToken}` });
 
             let commit = null;
+            let author = null;
             try {
               commit = yield octokit.repos.getCommit(params);
+              author = commit.data.author;
             } catch (e) {
               // e.g., permission issue
             }
-            const author = commit.data.author;
             const messageCard = yield message_card_1.createMessageCard(notificationSummary, notificationColor, commit, author, runNum, runId, repoName, sha, repoUrl, repoBranch, timestamp, hostname, text);
             // mazoea debug
             // console.log(messageCard);
