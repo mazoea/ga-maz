@@ -3134,7 +3134,7 @@ function run() {
 
             let commit = null;
             try {
-              const commit = await octokit.repos.getCommit(params);
+              const commit = yield octokit.repos.getCommit(params);
             } catch (e) {
               // e.g., permission issue
             }
