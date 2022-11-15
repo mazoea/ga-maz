@@ -2453,6 +2453,13 @@ function createMessageCard(notificationSummary, notificationColor, commit, autho
           html_url: '',
       }
     }
+    let commit_author_name = 'unknown';
+    let commit_html_url = '';
+    if (commit) {
+      commit_author_name = commit.data.commit.author.name;
+      commit_html_url = commit.data.html_url;
+    }
+
     const messageCard = {
         '@type': 'MessageCard',
         '@context': 'https://schema.org/extensions',
@@ -2463,7 +2470,7 @@ function createMessageCard(notificationSummary, notificationColor, commit, autho
             {
                 activityTitle: `**CI #${runNum} (commit ${sha.substr(0, 7)})** on [${repoName}](${repoUrl}) branch [${repoBranch}]`,
                 activityImage: avatar_url,
-                activitySubtitle: `by ${commit.data.commit.author.name} [(@${author.login})](${author.html_url}) on [${timestamp}] at [${hostname}]`,
+                activitySubtitle: `by ${commit_author_name} [(@${author.login})](${author.html_url}) on [${timestamp}] at [${hostname}]`,
                 activityText: text
             }
         ],
@@ -2476,7 +2483,7 @@ function createMessageCard(notificationSummary, notificationColor, commit, autho
             },
             {
                 '@context': 'http://schema.org',
-                target: [commit.data.html_url],
+                target: [commit_html_url],
                 '@type': 'ViewAction',
                 name: 'View Commit Changes'
             }
@@ -3124,7 +3131,13 @@ function run() {
             const repoName = params.owner + '/' + params.repo;
             const repoUrl = `https://github.com/${repoName}`;
             const octokit = new rest_1.Octokit({ auth: `token ${githubToken}` });
-            const commit = yield octokit.repos.getCommit(params);
+
+            let commit = null;
+            try {
+              const commit = await octokit.repos.getCommit(params);
+            } catch (e) {
+              // e.g., permission issue
+            }
             const author = commit.data.author;
             const messageCard = yield message_card_1.createMessageCard(notificationSummary, notificationColor, commit, author, runNum, runId, repoName, sha, repoUrl, repoBranch, timestamp, hostname, text);
             // mazoea debug
