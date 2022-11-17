@@ -45,6 +45,8 @@ runs:
         echo "=========================="
         df -h | grep /$ || true
         echo "=========================="
+        cat /proc/cpuinfo || true
+        echo "=========================="
 
     - name: services
       if: ${{ runner.os == 'Linux' }}
