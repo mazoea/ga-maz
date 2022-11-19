@@ -54,7 +54,7 @@ runs:
       run: |
         git --version || true
         echo "=========================="
-        git config --list 
+        git config --list --show-origin
         echo "=========================="
 
     - name: cleanup - change owner
