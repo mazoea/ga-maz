@@ -58,6 +58,12 @@ runs:
         git --version || true
         echo "=========================="
 
+    - name: cleanup - docker
+      shell: bash
+      run: |
+        echo "Docker repos login so we need to logout otherwise tokens stay and cause problems for next runs"
+        docker logout ghcr.io || true
+
     - name: cleanup - change owner
       if: ${{ runner.os == 'Linux' && inputs.UID != '0' }}
       shell: bash
