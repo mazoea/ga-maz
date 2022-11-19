@@ -54,6 +54,8 @@ runs:
       run: |
         git --version || true
         echo "=========================="
+        git config --list 
+        echo "=========================="
 
     - name: cleanup - change owner
       if: ${{ runner.os == 'Linux' && inputs.UID != '0' }}
