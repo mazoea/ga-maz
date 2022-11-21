@@ -59,6 +59,7 @@ runs:
         echo "=========================="
 
     - name: cleanup - docker
+      if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: |
         echo "Docker repos login so we need to logout otherwise tokens stay and cause problems for next runs"
