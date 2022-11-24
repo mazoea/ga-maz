@@ -78,6 +78,8 @@ runs:
       if: ${{ runner.os == 'Windows' }}
       shell: cmd
       run: |
+        set
+        echo "=========================="
         git --version || true
         echo "=========================="
         git config --list 
