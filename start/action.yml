@@ -74,6 +74,14 @@ runs:
         echo "${{ inputs.MSG }}"
         echo "${{ env.BRANCH }}"
 
+    - name: detailed info
+      if: ${{ runner.os == 'Windows' }}
+      shell: cmd
+      run: |
+        echo "=========================="
+        ipconfig || true
+        echo "=========================="
+
     - name: services
       if: ${{ runner.os == 'Windows' }}
       shell: cmd
