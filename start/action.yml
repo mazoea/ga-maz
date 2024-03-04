@@ -61,7 +61,7 @@ runs:
       if: ${{ runner.os == 'Linux' && inputs.UID != '0' }}
       shell: bash
       run: |
-        docker run --rm -e MAZUID=${{ inputs.UID }} -e MAZGID=${{ inputs.GID }} -v $(pwd):/maz ghcr.io/mazoea/docker-ci-build:u18g8py38 /bin/bash -c 'ls -lah /maz && echo chown -R $MAZUID:$MAZGID /maz && (chown -R $MAZUID:$MAZGID /maz | tail -25) && ls -lah /maz' || true
+        docker run --rm -e MAZUID=${{ inputs.UID }} -e MAZGID=${{ inputs.GID }} -v $(pwd):/maz alpine:3.19.1 /bin/sh -c 'ls -lah /maz && echo chown -R $MAZUID:$MAZGID /maz && (chown -R $MAZUID:$MAZGID /maz | tail -25) && ls -lah /maz' || true
 
 # windows
 
