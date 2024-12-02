@@ -1,6 +1,10 @@
 name: 'Mazoea default end action'
 description: 'Common tasks after job end'
 inputs:
+  CHOWN_DIR:
+    description: 'change owner of directory'
+    default: ''
+    required: false
   UID:
     description: 'uid'
     default: '0'
@@ -58,19 +62,28 @@ runs:
         git --version || true
         echo "=========================="
 
-    - name: cleanup - docker
-      if: ${{ runner.os == 'Linux' }}
-      shell: bash
-      run: |
-        echo "Docker repos login so we need to logout otherwise tokens stay and cause problems for next runs"
-        docker logout ghcr.io || true
-
     - name: cleanup - change owner
       if: ${{ runner.os == 'Linux' && inputs.UID != '0' }}
       shell: bash
       run: |
         echo chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./
         chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./ || true
+
+    - name: cleanup - change owner to default
+      if: ${{ runner.os == 'Linux' && inputs.CHOWN_DIR != '' }}
+      shell: bash
+      run: |
+        UUID=$(id -u)
+        GGID=$(id -g)
+        echo chown -R $UUID:$GGID ${{ inputs.CHOWN_DIR }}
+        docker run --rm -v $(pwd):/app -w /app alpine chown -R $UUID:$GGID ${{ inputs.CHOWN_DIR }} || true
+
+    - name: cleanup - docker
+      if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      run: |
+        echo "Docker repos login so we need to logout otherwise tokens stay and cause problems for next runs"
+        docker logout ghcr.io || true
 
     - name: detailed info
       if: ${{ runner.os == 'Linux' && inputs.MSG != '' }}
