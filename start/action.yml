@@ -96,7 +96,7 @@ runs:
         echo "=========================="
         git --version || true
         echo "=========================="
-        git config --list 
+        git config --list --show-origin
         echo "=========================="
 
     - name: detailed info
