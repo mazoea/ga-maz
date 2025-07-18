@@ -19,7 +19,7 @@ runs:
   using: "composite"
   steps:
     - name: Check event type and handle reviewer assignment
-      if: github.event_name == 'pull_request_review_requested' || (github.event_name == 'issues' && github.event.action == 'assigned')
+      if: github.event_name == 'pull_request' && github.event.action == 'review_requested'
       shell: bash
       run: |
         echo "Event: ${{ github.event_name }}"
