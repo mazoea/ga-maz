@@ -1,0 +1,98 @@
+name: 'Reviewer Label Management'
+description: 'Apply labels to issues/PRs based on reviewer assignments and review completion'
+inputs:
+  target-reviewer:
+    description: 'The GitHub username of the reviewer to watch for'
+    required: true
+  assigned-label:
+    description: 'Label to apply when the target reviewer is assigned'
+    required: true
+  completed-label:
+    description: 'Label to apply when the target reviewer completes their review'
+    required: true
+  github-token:
+    description: 'GitHub token for API access'
+    required: true
+    default: ${{ github.token }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check event type and handle reviewer assignment
+      if: github.event_name == 'pull_request_review_requested' || (github.event_name == 'issues' && github.event.action == 'assigned')
+      shell: bash
+      run: |
+        echo "Event: ${{ github.event_name }}"
+        echo "Action: ${{ github.event.action }}"
+        echo "Target reviewer: ${{ inputs.target-reviewer }}"
+        echo "Assigned label: ${{ inputs.assigned-label }}"
+        
+        # For pull request review requests
+        if [ "${{ github.event_name }}" == "pull_request_review_requested" ]; then
+          REQUESTED_REVIEWER="${{ github.event.requested_reviewer.login }}"
+          echo "Requested reviewer: $REQUESTED_REVIEWER"
+          
+          if [ "$REQUESTED_REVIEWER" == "${{ inputs.target-reviewer }}" ]; then
+            echo "Target reviewer was requested - applying label: ${{ inputs.assigned-label }}"
+            
+            # Use jq to properly format JSON
+            RESPONSE=$(curl -s -X POST \
+              -H "Authorization: token ${{ inputs.github-token }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels" \
+              -d "{\"labels\":[\"${{ inputs.assigned-label }}\"]}")
+            
+            if [ $? -eq 0 ]; then
+              echo "Label applied successfully"
+            else
+              echo "Error applying label: $RESPONSE"
+              exit 1
+            fi
+          fi
+        fi
+        
+    - name: Handle review completion
+      if: github.event_name == 'pull_request_review' && github.event.action == 'submitted'
+      shell: bash
+      run: |
+        echo "Event: ${{ github.event_name }}"
+        echo "Action: ${{ github.event.action }}"
+        echo "Review state: ${{ github.event.review.state }}"
+        echo "Reviewer: ${{ github.event.review.user.login }}"
+        echo "Target reviewer: ${{ inputs.target-reviewer }}"
+        
+        if [ "${{ github.event.review.user.login }}" == "${{ inputs.target-reviewer }}" ]; then
+          echo "Target reviewer submitted a review - managing labels"
+          
+          # URL encode the label name for the DELETE request
+          ENCODED_LABEL=$(printf '%s\n' "${{ inputs.assigned-label }}" | sed 's/ /%20/g')
+          
+          # Remove the assigned label
+          echo "Removing label: ${{ inputs.assigned-label }}"
+          DELETE_RESPONSE=$(curl -s -w "%{http_code}" -X DELETE \
+            -H "Authorization: token ${{ inputs.github-token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels/$ENCODED_LABEL")
+          
+          DELETE_HTTP_CODE="${DELETE_RESPONSE: -3}"
+          if [ "$DELETE_HTTP_CODE" = "200" ] || [ "$DELETE_HTTP_CODE" = "404" ]; then
+            echo "Label removed successfully (or didn't exist)"
+          else
+            echo "Warning: Could not remove label. HTTP code: $DELETE_HTTP_CODE"
+          fi
+          
+          # Add the completed label
+          echo "Adding label: ${{ inputs.completed-label }}"
+          ADD_RESPONSE=$(curl -s -X POST \
+            -H "Authorization: token ${{ inputs.github-token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels" \
+            -d "{\"labels\":[\"${{ inputs.completed-label }}\"]}")
+          
+          if [ $? -eq 0 ]; then
+            echo "Completed label applied successfully"
+          else
+            echo "Error applying completed label: $ADD_RESPONSE"
+            exit 1
+          fi
+        fi
