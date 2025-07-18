@@ -52,6 +52,9 @@ runs:
       if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: |
+        echo "==== 2024.12 fixing GA/git checkout issues"
+        git config --global http.version HTTP/1.1 || true
+        echo "=========================="
         git --version || true
         echo "=========================="
         git config --list --show-origin
@@ -86,11 +89,14 @@ runs:
       if: ${{ runner.os == 'Windows' }}
       shell: cmd
       run: |
+        echo "==== 2024.12 fixing GA/git checkout issues"
+        git config --global http.version HTTP/1.1 || true
+        echo "=========================="
         set
         echo "=========================="
         git --version || true
         echo "=========================="
-        git config --list 
+        git config --list --show-origin
         echo "=========================="
 
     - name: detailed info
