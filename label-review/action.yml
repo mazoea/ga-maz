@@ -27,27 +27,24 @@ runs:
         echo "Target reviewer: ${{ inputs.target-reviewer }}"
         echo "Assigned label: ${{ inputs.assigned-label }}"
         
-        # For pull request review requests
-        if [ "${{ github.event_name }}" == "pull_request_review_requested" ]; then
-          REQUESTED_REVIEWER="${{ github.event.requested_reviewer.login }}"
-          echo "Requested reviewer: $REQUESTED_REVIEWER"
+        REQUESTED_REVIEWER="${{ github.event.requested_reviewer.login }}"
+        echo "Requested reviewer: $REQUESTED_REVIEWER"
+        
+        if [ "$REQUESTED_REVIEWER" == "${{ inputs.target-reviewer }}" ]; then
+          echo "Target reviewer was requested - applying label: ${{ inputs.assigned-label }}"
           
-          if [ "$REQUESTED_REVIEWER" == "${{ inputs.target-reviewer }}" ]; then
-            echo "Target reviewer was requested - applying label: ${{ inputs.assigned-label }}"
-            
-            # Use jq to properly format JSON
-            RESPONSE=$(curl -s -X POST \
-              -H "Authorization: token ${{ inputs.github-token }}" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels" \
-              -d "{\"labels\":[\"${{ inputs.assigned-label }}\"]}")
-            
-            if [ $? -eq 0 ]; then
-              echo "Label applied successfully"
-            else
-              echo "Error applying label: $RESPONSE"
-              exit 1
-            fi
+          # Use jq to properly format JSON
+          RESPONSE=$(curl -s -X POST \
+            -H "Authorization: token ${{ inputs.github-token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels" \
+            -d "{\"labels\":[\"${{ inputs.assigned-label }}\"]}")
+          
+          if [ $? -eq 0 ]; then
+            echo "Label applied successfully"
+          else
+            echo "Error applying label: $RESPONSE"
+            exit 1
           fi
         fi
         
