@@ -1355,8 +1355,13 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     }
     exports2.getBooleanInput = getBooleanInput2;
     function setOutput2(name, value) {
-      process.stdout.write(os2.EOL);
-      command_1.issueCommand("set-output", { name }, value);
+      const filePath = process.env["GITHUB_OUTPUT"] || "";
+      if (filePath) {
+        file_command_1.issueCommand("OUTPUT", `${name}=${value}`);
+      } else {
+        process.stdout.write(os2.EOL);
+        command_1.issueCommand("set-output", { name }, value);
+      }
     }
     exports2.setOutput = setOutput2;
     function setCommandEcho(enabled) {
@@ -1718,8 +1723,13 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     }
     exports2.getBooleanInput = getBooleanInput2;
     function setOutput2(name, value) {
-      process.stdout.write(os2.EOL);
-      command_1.issueCommand("set-output", { name }, value);
+      const filePath = process.env["GITHUB_OUTPUT"] || "";
+      if (filePath) {
+        file_command_1.issueCommand("OUTPUT", `${name}=${value}`);
+      } else {
+        process.stdout.write(os2.EOL);
+        command_1.issueCommand("set-output", { name }, value);
+      }
     }
     exports2.setOutput = setOutput2;
     function setCommandEcho(enabled) {
