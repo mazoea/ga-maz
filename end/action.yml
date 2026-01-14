@@ -78,13 +78,13 @@ runs:
         UUID=$(id -u)
         GGID=$(id -g)
         echo chown -R $UUID:$GGID ${{ inputs.CHOWN_DIR }}
-        docker run --rm -v $(pwd):/app -w /app alpine chown -R $UUID:$GGID ${{ inputs.CHOWN_DIR }} || true    
+        docker run --rm -v $(pwd):/app -w /app alpine chown -R $UUID:$GGID ${{ inputs.CHOWN_DIR }} || true
 
     - name: cleanup - docker
       if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: |
-        echo "Docker repos login so we need to logout otherwise tokens stay and cause problems for next runs" 
+        echo "Docker repos login so we need to logout otherwise tokens stay and cause problems for next runs"
         docker logout ghcr.io || true
 
     - name: detailed info
