@@ -33,7 +33,9 @@ runs:
       run: |
         echo "${{ inputs.UID }}"
         echo "${{ inputs.GID }}"
-        echo "${{ inputs.MSG }}"
+        cat << 'EOF_MSG'
+        ${{ inputs.MSG }}
+        EOF_MSG
         echo "${{ env.BRANCH }}"
 
     - name: basic info
@@ -76,20 +78,22 @@ runs:
         UUID=$(id -u)
         GGID=$(id -g)
         echo chown -R $UUID:$GGID ${{ inputs.CHOWN_DIR }}
-        docker run --rm -v $(pwd):/app -w /app alpine chown -R $UUID:$GGID ${{ inputs.CHOWN_DIR }} || true
+        docker run --rm -v $(pwd):/app -w /app alpine chown -R $UUID:$GGID ${{ inputs.CHOWN_DIR }} || true    
 
     - name: cleanup - docker
       if: ${{ runner.os == 'Linux' }}
       shell: bash
       run: |
-        echo "Docker repos login so we need to logout otherwise tokens stay and cause problems for next runs"
+        echo "Docker repos login so we need to logout otherwise tokens stay and cause problems for next runs" 
         docker logout ghcr.io || true
 
     - name: detailed info
       if: ${{ runner.os == 'Linux' && inputs.MSG != '' }}
       shell: bash
       run: |
-        echo "${{ inputs.MSG }}"
+        cat << 'EOF_MSG'
+        ${{ inputs.MSG }}
+        EOF_MSG
 
 # windows
 
@@ -99,7 +103,7 @@ runs:
       run: |
         echo "${{ inputs.UID }}"
         echo "${{ inputs.GID }}"
-        echo "${{ inputs.MSG }}"
+        echo ${{ inputs.MSG }}
         echo "${{ env.BRANCH }}"
 
     - name: services
@@ -113,4 +117,4 @@ runs:
       if: ${{ runner.os == 'Windows' && inputs.MSG != '' }}
       shell: cmd
       run: |
-        echo "${{ inputs.MSG }}"
+        echo ${{ inputs.MSG }}
