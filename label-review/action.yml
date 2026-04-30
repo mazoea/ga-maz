@@ -21,75 +21,79 @@ runs:
     - name: Check event type and handle reviewer assignment
       if: github.event_name == 'pull_request' && github.event.action == 'review_requested'
       shell: bash
+      env:
+        TARGET_REVIEWER: ${{ inputs.target-reviewer }}
+        ASSIGNED_LABEL: ${{ inputs.assigned-label }}
+        REQUESTED_REVIEWER: ${{ github.event.requested_reviewer.login }}
+        GH_API_URL: ${{ github.api_url }}
+        GH_REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        GH_TOKEN: ${{ inputs.github-token }}
       run: |
+        set -euo pipefail
         echo "Event: ${{ github.event_name }}"
         echo "Action: ${{ github.event.action }}"
-        echo "Target reviewer: ${{ inputs.target-reviewer }}"
-        echo "Assigned label: ${{ inputs.assigned-label }}"
-        
-        REQUESTED_REVIEWER="${{ github.event.requested_reviewer.login }}"
+        echo "Target reviewer: $TARGET_REVIEWER"
+        echo "Assigned label: $ASSIGNED_LABEL"
         echo "Requested reviewer: $REQUESTED_REVIEWER"
-        
-        if [ "$REQUESTED_REVIEWER" == "${{ inputs.target-reviewer }}" ]; then
-          echo "Target reviewer was requested - applying label: ${{ inputs.assigned-label }}"
-          
-          # Use jq to properly format JSON
-          RESPONSE=$(curl -s -X POST \
-            -H "Authorization: token ${{ inputs.github-token }}" \
+
+        if [ "$REQUESTED_REVIEWER" = "$TARGET_REVIEWER" ]; then
+          echo "Target reviewer was requested - applying label: $ASSIGNED_LABEL"
+
+          # jq -nc builds the JSON; we never interpolate the label into a shell-double-quoted string
+          PAYLOAD=$(jq -nc --arg label "$ASSIGNED_LABEL" '{labels: [$label]}')
+          RESPONSE=$(curl -sS -X POST \
+            -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels" \
-            -d "{\"labels\":[\"${{ inputs.assigned-label }}\"]}")
-          
-          if [ $? -eq 0 ]; then
-            echo "Label applied successfully"
-          else
-            echo "Error applying label: $RESPONSE"
-            exit 1
-          fi
+            "$GH_API_URL/repos/$GH_REPO/issues/$PR_NUMBER/labels" \
+            -d "$PAYLOAD")
+          echo "Label apply response: $RESPONSE"
         fi
-        
+
     - name: Handle review completion
       if: github.event_name == 'pull_request_review' && github.event.action == 'submitted'
       shell: bash
+      env:
+        TARGET_REVIEWER: ${{ inputs.target-reviewer }}
+        ASSIGNED_LABEL: ${{ inputs.assigned-label }}
+        COMPLETED_LABEL: ${{ inputs.completed-label }}
+        REVIEW_USER: ${{ github.event.review.user.login }}
+        REVIEW_STATE: ${{ github.event.review.state }}
+        GH_API_URL: ${{ github.api_url }}
+        GH_REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        GH_TOKEN: ${{ inputs.github-token }}
       run: |
+        set -euo pipefail
         echo "Event: ${{ github.event_name }}"
         echo "Action: ${{ github.event.action }}"
-        echo "Review state: ${{ github.event.review.state }}"
-        echo "Reviewer: ${{ github.event.review.user.login }}"
-        echo "Target reviewer: ${{ inputs.target-reviewer }}"
-        
-        if [ "${{ github.event.review.user.login }}" == "${{ inputs.target-reviewer }}" ]; then
+        echo "Review state: $REVIEW_STATE"
+        echo "Reviewer: $REVIEW_USER"
+        echo "Target reviewer: $TARGET_REVIEWER"
+
+        if [ "$REVIEW_USER" = "$TARGET_REVIEWER" ]; then
           echo "Target reviewer submitted a review - managing labels"
-          
-          # URL encode the label name for the DELETE request
-          ENCODED_LABEL=$(printf '%s\n' "${{ inputs.assigned-label }}" | sed 's/ /%20/g')
-          
-          # Remove the assigned label
-          echo "Removing label: ${{ inputs.assigned-label }}"
-          DELETE_RESPONSE=$(curl -s -w "%{http_code}" -X DELETE \
-            -H "Authorization: token ${{ inputs.github-token }}" \
+
+          # URL-encode using jq @uri so spaces and special chars are safe in the path
+          ENCODED_LABEL=$(jq -rn --arg l "$ASSIGNED_LABEL" '$l|@uri')
+
+          echo "Removing label: $ASSIGNED_LABEL"
+          DELETE_HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X DELETE \
+            -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels/$ENCODED_LABEL")
-          
-          DELETE_HTTP_CODE="${DELETE_RESPONSE: -3}"
+            "$GH_API_URL/repos/$GH_REPO/issues/$PR_NUMBER/labels/$ENCODED_LABEL")
           if [ "$DELETE_HTTP_CODE" = "200" ] || [ "$DELETE_HTTP_CODE" = "404" ]; then
             echo "Label removed successfully (or didn't exist)"
           else
             echo "Warning: Could not remove label. HTTP code: $DELETE_HTTP_CODE"
           fi
-          
-          # Add the completed label
-          echo "Adding label: ${{ inputs.completed-label }}"
-          ADD_RESPONSE=$(curl -s -X POST \
-            -H "Authorization: token ${{ inputs.github-token }}" \
+
+          echo "Adding label: $COMPLETED_LABEL"
+          PAYLOAD=$(jq -nc --arg label "$COMPLETED_LABEL" '{labels: [$label]}')
+          ADD_RESPONSE=$(curl -sS -X POST \
+            -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels" \
-            -d "{\"labels\":[\"${{ inputs.completed-label }}\"]}")
-          
-          if [ $? -eq 0 ]; then
-            echo "Completed label applied successfully"
-          else
-            echo "Error applying completed label: $ADD_RESPONSE"
-            exit 1
-          fi
+            "$GH_API_URL/repos/$GH_REPO/issues/$PR_NUMBER/labels" \
+            -d "$PAYLOAD")
+          echo "Completed label response: $ADD_RESPONSE"
         fi
