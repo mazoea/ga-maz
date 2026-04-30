@@ -74,23 +74,33 @@ runs:
         IN_UID: ${{ inputs.UID }}
         IN_GID: ${{ inputs.GID }}
       run: |
-        # MAZUID / MAZGID are passed into the container via -e, never interpolated into the shell line
-        docker run --rm -e MAZUID="$IN_UID" -e MAZGID="$IN_GID" -v "$(pwd)":/maz alpine:3.19.1 /bin/sh -c 'ls -lah /maz && echo chown -R "$MAZUID":"$MAZGID" /maz && (chown -R "$MAZUID":"$MAZGID" /maz | tail -25) && ls -lah /maz' || true
+        # Validate UID/GID before they reach chown. Quoting prevents shell
+        # injection but a value beginning with `-` could still be parsed as
+        # a chown option. Reject anything that isn't pure digits.
+        case "$IN_UID" in (''|*[!0-9]*) echo "invalid UID: $IN_UID" >&2; exit 1;; esac
+        case "$IN_GID" in (''|*[!0-9]*) echo "invalid GID: $IN_GID" >&2; exit 1;; esac
+        # MAZUID / MAZGID are passed into the container via -e, never interpolated into the shell line.
+        # `--` after `-R` stops chown from treating values as options if the validation above is ever bypassed.
+        docker run --rm -e MAZUID="$IN_UID" -e MAZGID="$IN_GID" -v "$(pwd)":/maz alpine:3.19.1 /bin/sh -c 'ls -lah /maz && echo chown -R -- "$MAZUID":"$MAZGID" /maz && (chown -R -- "$MAZUID":"$MAZGID" /maz | tail -25) && ls -lah /maz' || true
 
 # windows
 
     - name: inputs
       if: ${{ runner.os == 'Windows' }}
-      shell: cmd
+      # PowerShell, not cmd: cmd re-parses the command line after %VAR%
+      # expansion, so a value containing `&`, `|`, `>`, or quotes can
+      # break out of the echo and inject additional commands. PowerShell
+      # does not re-parse $env:VAR.
+      shell: pwsh
       env:
         IN_UID: ${{ inputs.UID }}
         IN_GID: ${{ inputs.GID }}
         IN_MSG: ${{ inputs.MSG }}
       run: |
-        echo "%IN_UID%"
-        echo "%IN_GID%"
-        echo "%IN_MSG%"
-        echo "%BRANCH%"
+        Write-Output $env:IN_UID
+        Write-Output $env:IN_GID
+        Write-Output $env:IN_MSG
+        Write-Output $env:BRANCH
 
     - name: detailed info
       if: ${{ runner.os == 'Windows' }}
@@ -116,8 +126,9 @@ runs:
 
     - name: detailed info
       if: ${{ runner.os == 'Windows' && inputs.MSG != '' }}
-      shell: cmd
+      # See note above on shell: pwsh; %IN_MSG% in cmd is injectable.
+      shell: pwsh
       env:
         IN_MSG: ${{ inputs.MSG }}
       run: |
-        echo "%IN_MSG%"
+        Write-Output $env:IN_MSG

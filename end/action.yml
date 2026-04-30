@@ -74,11 +74,12 @@ runs:
         IN_GID: ${{ inputs.GID }}
       run: |
         # Validate UID/GID look like positive integers before letting them
-        # near a chown invocation.
+        # near a chown invocation. The `--` after `-R` stops chown from
+        # interpreting a value beginning with `-` as an option.
         case "$IN_UID" in (''|*[!0-9]*) echo "invalid UID: $IN_UID" >&2; exit 1;; esac
         case "$IN_GID" in (''|*[!0-9]*) echo "invalid GID: $IN_GID" >&2; exit 1;; esac
-        echo "chown -R $IN_UID:$IN_GID ./"
-        chown -R "$IN_UID:$IN_GID" ./ || true
+        echo "chown -R -- $IN_UID:$IN_GID ./"
+        chown -R -- "$IN_UID:$IN_GID" ./ || true
 
     - name: cleanup - change owner to default
       if: ${{ runner.os == 'Linux' && inputs.CHOWN_DIR != '' }}
@@ -88,8 +89,14 @@ runs:
       run: |
         UUID=$(id -u)
         GGID=$(id -g)
-        echo "chown -R $UUID:$GGID $IN_CHOWN_DIR"
-        docker run --rm -v "$(pwd)":/app -w /app alpine chown -R "$UUID:$GGID" "$IN_CHOWN_DIR" || true
+        # Reject paths that look like options (-x, --foo) or contain shell
+        # metacharacters; pass `--` to chown so the path is treated as an
+        # operand even if validation is bypassed.
+        case "$IN_CHOWN_DIR" in
+          -*|*[';&|`$']*) echo "invalid CHOWN_DIR: $IN_CHOWN_DIR" >&2; exit 1;;
+        esac
+        echo "chown -R -- $UUID:$GGID $IN_CHOWN_DIR"
+        docker run --rm -v "$(pwd)":/app -w /app alpine chown -R -- "$UUID:$GGID" "$IN_CHOWN_DIR" || true
 
     - name: cleanup - docker
       if: ${{ runner.os == 'Linux' }}
@@ -110,16 +117,20 @@ runs:
 
     - name: inputs
       if: ${{ runner.os == 'Windows' }}
-      shell: cmd
+      # Use PowerShell, not cmd, for printing untrusted env vars. cmd
+      # re-parses the line after %VAR% expansion, so a value containing
+      # `&`, `|`, `>`, or quotes can break out of the echo and inject
+      # additional commands. PowerShell does not re-parse $env:VAR.
+      shell: pwsh
       env:
         IN_UID: ${{ inputs.UID }}
         IN_GID: ${{ inputs.GID }}
         IN_MSG: ${{ inputs.MSG }}
       run: |
-        echo "%IN_UID%"
-        echo "%IN_GID%"
-        echo %IN_MSG%
-        echo "%BRANCH%"
+        Write-Output $env:IN_UID
+        Write-Output $env:IN_GID
+        Write-Output $env:IN_MSG
+        Write-Output $env:BRANCH
 
     - name: services
       if: ${{ runner.os == 'Windows' }}
@@ -130,8 +141,9 @@ runs:
 
     - name: detailed info
       if: ${{ runner.os == 'Windows' && inputs.MSG != '' }}
-      shell: cmd
+      # See note above on shell: pwsh; %IN_MSG% in cmd is injectable.
+      shell: pwsh
       env:
         IN_MSG: ${{ inputs.MSG }}
       run: |
-        echo %IN_MSG%
+        Write-Output $env:IN_MSG

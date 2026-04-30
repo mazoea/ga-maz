@@ -18,6 +18,18 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Verify jq is available
+      # `jq` is used below to build JSON payloads and URL-encode label
+      # names. It ships with GitHub-hosted Ubuntu runners but is not
+      # guaranteed on self-hosted or macOS runners. Fail loudly here
+      # rather than mid-curl so the workflow author knows what to install.
+      shell: bash
+      run: |
+        if ! command -v jq >/dev/null 2>&1; then
+          echo "::error::This action requires 'jq' on the runner. Install it before invoking (e.g. 'sudo apt-get install -y jq' on self-hosted Linux, 'brew install jq' on macOS)." >&2
+          exit 1
+        fi
+
     - name: Check event type and handle reviewer assignment
       if: github.event_name == 'pull_request' && github.event.action == 'review_requested'
       shell: bash
