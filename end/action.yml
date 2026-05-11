@@ -30,12 +30,14 @@ runs:
     - name: inputs
       if: ${{ runner.os == 'Linux' }}
       shell: bash
+      env:
+        IN_UID: ${{ inputs.UID }}
+        IN_GID: ${{ inputs.GID }}
+        IN_MSG: ${{ inputs.MSG }}
       run: |
-        echo "${{ inputs.UID }}"
-        echo "${{ inputs.GID }}"
-        cat << 'EOF_MSG'
-        ${{ inputs.MSG }}
-        EOF_MSG
+        echo "$IN_UID"
+        echo "$IN_GID"
+        printf '%s\n' "$IN_MSG"
         echo "${{ env.BRANCH }}"
 
     - name: basic info
@@ -67,18 +69,23 @@ runs:
     - name: cleanup - change owner
       if: ${{ runner.os == 'Linux' && inputs.UID != '0' }}
       shell: bash
+      env:
+        IN_UID: ${{ inputs.UID }}
+        IN_GID: ${{ inputs.GID }}
       run: |
-        echo chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./
-        chown -R  ${{ inputs.UID }}:${{ inputs.GID }} ./ || true
+        echo chown -R "$IN_UID:$IN_GID" ./
+        chown -R "$IN_UID:$IN_GID" ./ || true
 
     - name: cleanup - change owner to default
       if: ${{ runner.os == 'Linux' && inputs.CHOWN_DIR != '' }}
       shell: bash
+      env:
+        IN_CHOWN_DIR: ${{ inputs.CHOWN_DIR }}
       run: |
         UUID=$(id -u)
         GGID=$(id -g)
-        echo chown -R $UUID:$GGID ${{ inputs.CHOWN_DIR }}
-        docker run --rm -v $(pwd):/app -w /app alpine chown -R $UUID:$GGID ${{ inputs.CHOWN_DIR }} || true
+        echo chown -R $UUID:$GGID "$IN_CHOWN_DIR"
+        docker run --rm -v $(pwd):/app -w /app alpine chown -R $UUID:$GGID "$IN_CHOWN_DIR" || true
 
     - name: cleanup - docker
       if: ${{ runner.os == 'Linux' }}
@@ -90,20 +97,24 @@ runs:
     - name: detailed info
       if: ${{ runner.os == 'Linux' && inputs.MSG != '' }}
       shell: bash
+      env:
+        IN_MSG: ${{ inputs.MSG }}
       run: |
-        cat << 'EOF_MSG'
-        ${{ inputs.MSG }}
-        EOF_MSG
+        printf '%s\n' "$IN_MSG"
 
 # windows
 
     - name: inputs
       if: ${{ runner.os == 'Windows' }}
       shell: cmd
+      env:
+        IN_UID: ${{ inputs.UID }}
+        IN_GID: ${{ inputs.GID }}
+        IN_MSG: ${{ inputs.MSG }}
       run: |
-        echo "${{ inputs.UID }}"
-        echo "${{ inputs.GID }}"
-        echo ${{ inputs.MSG }}
+        echo "%IN_UID%"
+        echo "%IN_GID%"
+        echo "%IN_MSG%"
         echo "${{ env.BRANCH }}"
 
     - name: services
@@ -116,5 +127,7 @@ runs:
     - name: detailed info
       if: ${{ runner.os == 'Windows' && inputs.MSG != '' }}
       shell: cmd
+      env:
+        IN_MSG: ${{ inputs.MSG }}
       run: |
-        echo ${{ inputs.MSG }}
+        echo "%IN_MSG%"
