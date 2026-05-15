@@ -54,6 +54,7 @@ runs:
       run: |
         echo "==== 2024.12 fixing GA/git checkout issues"
         git config --global http.version HTTP/1.1 || true
+        git config --global init.defaultBranch master || true
         echo "=========================="
         git --version || true
         echo "=========================="
@@ -91,6 +92,7 @@ runs:
       run: |
         echo "==== 2024.12 fixing GA/git checkout issues"
         git config --global http.version HTTP/1.1 || true
+        git config --global init.defaultBranch master || true
         echo "=========================="
         set
         echo "=========================="
