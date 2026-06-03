@@ -12,5 +12,3 @@ jobs:
     - uses: actions/checkout@v6
     
     - uses: ./start
-      with:
-        CONTEXT_GITHUB: ${{ toJson(github) }}
