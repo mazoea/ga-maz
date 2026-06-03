@@ -13,6 +13,10 @@ inputs:
     description: 'webhook url'
     required: false
     default: ''
+  MSG:
+    description: 'optional message echoed on Windows runners (used by the windows steps below)'
+    required: false
+    default: ''
 runs:
   using: "composite"
   steps:
