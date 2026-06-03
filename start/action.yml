@@ -26,9 +26,12 @@ runs:
     - name: inputs
       if: ${{ runner.os == 'Linux' }}
       shell: bash
+      env:
+        IN_UID: ${{ inputs.UID }}
+        IN_GID: ${{ inputs.GID }}
       run: |
-        echo "${{ inputs.UID }}"
-        echo "${{ inputs.GID }}"
+        echo "$IN_UID"
+        echo "$IN_GID"
         echo "${{ env.BRANCH }}"
 
     - name: basic info
@@ -68,18 +71,25 @@ runs:
     - name: cleanup - change owner
       if: ${{ runner.os == 'Linux' && inputs.UID != '0' }}
       shell: bash
+      env:
+        IN_UID: ${{ inputs.UID }}
+        IN_GID: ${{ inputs.GID }}
       run: |
-        docker run --rm -e MAZUID=${{ inputs.UID }} -e MAZGID=${{ inputs.GID }} -v $(pwd):/maz alpine:3.19.1 /bin/sh -c 'ls -lah /maz && echo chown -R $MAZUID:$MAZGID /maz && (chown -R $MAZUID:$MAZGID /maz | tail -25) && ls -lah /maz' || true
+        docker run --rm -e MAZUID="$IN_UID" -e MAZGID="$IN_GID" -v $(pwd):/maz alpine:3.19.1 /bin/sh -c 'ls -lah /maz && echo chown -R $MAZUID:$MAZGID /maz && (chown -R $MAZUID:$MAZGID /maz | tail -25) && ls -lah /maz' || true
 
 # windows
 
     - name: inputs
       if: ${{ runner.os == 'Windows' }}
       shell: cmd
+      env:
+        IN_UID: ${{ inputs.UID }}
+        IN_GID: ${{ inputs.GID }}
+        IN_MSG: ${{ inputs.MSG }}
       run: |
-        echo "${{ inputs.UID }}"
-        echo "${{ inputs.GID }}"
-        echo "${{ inputs.MSG }}"
+        echo "%IN_UID%"
+        echo "%IN_GID%"
+        echo "%IN_MSG%"
         echo "${{ env.BRANCH }}"
 
     - name: detailed info
@@ -108,5 +118,7 @@ runs:
     - name: detailed info
       if: ${{ runner.os == 'Windows' && inputs.MSG != '' }}
       shell: cmd
+      env:
+        IN_MSG: ${{ inputs.MSG }}
       run: |
-        echo "${{ inputs.MSG }}"
+        echo "%IN_MSG%"
